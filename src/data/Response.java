@@ -8,20 +8,17 @@ public class Response {
 	String requestType;
 	String word;
 	String body;
-	boolean error; 
 	
-	public Response(String requestType, String word, String body, boolean error) {
+	public Response(String requestType, String word, String body) {
 		this.requestType = requestType;
 		this.word = word;
 		this.body = body;
-		this.error = error; 
 	}
 	
 	public Response(Json j) {
 		String requestType = j.at("requestType").toString();
 		String word = j.at("word").toString();
 		String body = j.at("body").toString();
-		boolean error = j.at("error").asBoolean();
 		
 		if (requestType == null || word == null) {
 			throw new IllegalArgumentException();
@@ -29,15 +26,13 @@ public class Response {
 			this.requestType = requestType;
 			this.word = word;
 			this.body = body;
-			this.error = error; 
 		}
 	}
 	
 	public String getJsonString() {
 		Json j = Json.object().set("requestType", this.requestType)
 				.set("word", this.word)
-				.set("body", this.body)
-				.set("error", this.error);
+				.set("body", this.body);
 		return j.toString();
 	}
 	
@@ -55,9 +50,7 @@ public class Response {
 		return this.body;
 	}
 
-	public boolean isError() {
-		return this.error;
-	}
+
 	
 
 }

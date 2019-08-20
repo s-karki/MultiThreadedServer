@@ -24,6 +24,8 @@ class Server {
 	
 		while(true) {
 			Socket conn = server.accept();
+			System.out.println("New Socket opened to " + conn.getInetAddress() + " on port "
+			+ port);
 			new Thread(new ConnectionRunnable(conn, dict)).start();
 
 		}

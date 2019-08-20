@@ -32,7 +32,7 @@ public class Dictionary {
 			// parse JSON
 			Json j = Json.read(record);
 			String word = j.at("word").toString();
-			String definition = j.at(record).toString();
+			String definition = j.at("definition").toString();
 			readIn.put(word, definition);
 		}
 		dict = readIn; 
@@ -84,6 +84,7 @@ public class Dictionary {
 			lock.writeLock().unlock();
 		}
 		
+		System.out.println("res: " + Boolean.toString(success) + append);
 		return Boolean.toString(success) + append; 
 		
 	}

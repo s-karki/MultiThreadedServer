@@ -25,10 +25,21 @@ public class Request {
 	public Request(Json j) {
 		String r = j.at("requestType").toString();
 		String w = j.at("word").toString();
-		String d = j.at("definition").toString();
 		
+		System.out.println("r: " + r);
+
+		String d = null;
+		if (r.equals("\"add\"")) {
+			d = j.at("definition").toString();
+			System.out.println("d: " + d);
+		}
 		
-		if (requestType == null || word == null) {
+		/*System.out.println(r);
+		System.out.println(w);
+		System.out.println(d);
+		System.out.println(j);*/
+		
+		if (r == null || w == null) {
 			throw new IllegalArgumentException();
 		} else {
 			requestType = r;
@@ -47,8 +58,9 @@ public class Request {
 	}
 	
 	public String getJsonString() {
-		Json j = Json.object().set("requestType", this.requestType)
-				.set("word", this.word); 
+		Json j = Json.object().set("requestType", requestType)
+				.set("word", word)
+				.set("definition", definition); 
 		return j.toString();
 	}
 	
@@ -65,4 +77,11 @@ public class Request {
 		return requestType; 
 	}
 
+	public String toString() {
+		return
+				"type: " + requestType + "\n"
+				+ "word: " + word + "\n"
+				+ "definition: " + definition;
+	}
+	
 }

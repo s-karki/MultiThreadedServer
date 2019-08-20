@@ -1,6 +1,7 @@
 package client;
 
 import java.net.*;
+import java.util.Arrays;
 import java.util.Scanner;
 
 import data.*;
@@ -31,13 +32,17 @@ public class Client {
 		DataOutputStream dout = new DataOutputStream(conn.getOutputStream());
 		
 		while(true) {
-			String[] cmd = s.nextLine().split(" ");
+			String input = s.nextLine();
+			String[] cmd = input.split(" ");
 			if (cmd[0].equals("exit")) {
 				System.out.println("Exiting");
 				din.close();
 				dout.close();
 				conn.close();
+				s.close();
+				System.exit(0);
 			}
+			
 			
 			String requestType = cmd[0];
 			String word = cmd[1]; 
@@ -53,7 +58,21 @@ public class Client {
 					System.out.println("Invalid request type: no definition");
 					continue; 
 				}
-				out = new Request(requestType, word, cmd[2]).getJsonString();
+				//get the definition as a string
+				String[] arrayDefinition = Arrays.copyOfRange(cmd, 2, cmd.length); 
+				StringBuilder sb = new StringBuilder();
+				for (int i = 0; i < arrayDefinition.length; i++) {
+					if (i < arrayDefinition.length - 1) {
+						sb.append(arrayDefinition[i]);
+						sb.append(" ");
+					} else {
+						sb.append(arrayDefinition[i]);
+					}
+				}
+				String definition = sb.toString();
+				out = new Request(requestType, word, definition).getJsonString();
+							
+				
 			} else {
 				out = new Request(requestType, word).getJsonString();
 			}
@@ -61,8 +80,9 @@ public class Client {
 
 			//get response and display
 			String in = din.readUTF();
-			Response res = new Response(Json.read(in)); // need error handling (illegal argument)??
+			Response res = new Response(Json.read(in)); // need error handling (illegal argument/server dies)??
 			
+			System.out.println("\n");
 			System.out.println(res.getRequestType());
 			System.out.println(res.getWord());
 			System.out.println(res.getBody());

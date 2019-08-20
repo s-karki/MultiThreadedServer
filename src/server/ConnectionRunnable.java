@@ -17,6 +17,7 @@ public class ConnectionRunnable implements Runnable {
 	}
 	
 	public void run() {
+		//TODO: timeout after disconnect
 		DataInputStream din = null;
 		DataOutputStream dout = null;
 		try {
@@ -28,31 +29,45 @@ public class ConnectionRunnable implements Runnable {
 		}
 		
 		String in; 
-		try {
-			in = din.readUTF();
-		} catch (IOException e) {
-			ExceptionHandler.printMessage("Could not read from the client", e);
-			return; 
-		}
-		Request req = new Request(Json.read(in));
-		String requestType = req.getRequestType();
-		String word = req.getWord();
-		String definition = req.getDefinition();
 		
-		String response = ""; 
-		switch (requestType) {
-			case "add":
-				response = dict.add(word, definition);
-			case "remove":
-				response = dict.remove(word);
-			case "query":
-				response = dict.query(word);
-		}
-		
-		//write the requestType, word, definition (if any) / body to the client
-		
-				
+		while(true) {
 
+			try {
+				in = din.readUTF();
+			} catch (IOException e) {
+				System.out.println("Client has disconnected");
+				return; 
+			}
+			Request req = new Request(Json.read(in));
+			String requestType = req.getRequestType();
+			String word = req.getWord();
+			String definition = req.getDefinition();
+			
+			String response = ""; 
+			
+			System.out.println(req);
+			System.out.println("requestType:" + requestType);
+			
+			switch (requestType) {
+				case "\"add\"":
+					response = dict.add(word, definition);
+				case "\"remove\"":
+					response = dict.remove(word);
+				case "\"query\"":
+					response = dict.query(word);
+			}
+			System.out.println(response);
+	
+			
+			//write the requestType, word, definition (if any) / body to the client
+			String msg = new Response(requestType, word, response).getJsonString();
+			try {
+				dout.writeUTF(msg);
+			} catch (IOException e){
+				ExceptionHandler.printMessage("Error: Could not write to the client", e);
+				return; 
+			}
+		}
 	}
 
 }
