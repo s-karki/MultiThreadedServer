@@ -5,17 +5,27 @@ import java.io.*;
 import data.*; 
 import mjson.Json;
 
+/* USAGE: java Server {PORT}
+ * 
+ */
+
 class Server {
 
 	public static void main(String[] args) throws IOException {
+		// test if the dictionary file exists
+		File f = new File("dictionary.txt");
+		//create a dictionary file if it does not exist, and load records into memory
+		f.createNewFile(); 
+		Dictionary dict = new Dictionary(f);
+		dict.loadIntoMemory();
+		
 		int port = Integer.parseInt(args[0]);
-		ServerSocket server = new ServerSocket(port);
-		// load dictionary into memory 
-		
-		
+		ServerSocket server = new ServerSocket(port);		
+	
 		while(true) {
-			Socket connection = server.accept();
-			
+			Socket conn = server.accept();
+			new Thread(new ConnectionRunnable(conn, dict)).start();
+
 		}
 		
 	}

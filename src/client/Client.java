@@ -39,22 +39,32 @@ public class Client {
 				conn.close();
 			}
 			
-			String requestType = cmd[1];
-			String word = cmd[2]; 
+			String requestType = cmd[0];
+			String word = cmd[1]; 
 			//Get rid of this for GUI
 			if(Request.isValidRequestType(requestType) == false) {
 				System.out.println("Invalid request type");
 				continue; 
 			}
 			//write the request to JSON and send
-			String out = new Request(requestType, word).getJsonString();
+			String out; 
+			if (requestType.equals("add")) {
+				if (cmd.length < 3) {
+					System.out.println("Invalid request type: no definition");
+					continue; 
+				}
+				out = new Request(requestType, word, cmd[2]).getJsonString();
+			} else {
+				out = new Request(requestType, word).getJsonString();
+			}
 			dout.writeUTF(out);
-			
+
 			//get response and display
 			String in = din.readUTF();
 			Response res = new Response(Json.read(in)); // need error handling (illegal argument)??
 			
 			System.out.println(res.getRequestType());
+			System.out.println(res.getWord());
 			System.out.println(res.getBody());
 			
 			

@@ -9,9 +9,11 @@ import exception.ExceptionHandler;
 public class ConnectionRunnable implements Runnable {
 	
 	Socket conn; 
+	Dictionary dict;
 	
-	public ConnectionRunnable(Socket conn) {
+	public ConnectionRunnable(Socket conn, Dictionary dict) {
 		this.conn = conn; 
+		this.dict = dict; 
 	}
 	
 	public void run() {
@@ -29,20 +31,28 @@ public class ConnectionRunnable implements Runnable {
 		try {
 			in = din.readUTF();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			ExceptionHandler.printMessage("Could not read from the client", e);
 			return; 
 		}
 		Request req = new Request(Json.read(in));
 		String requestType = req.getRequestType();
 		String word = req.getWord();
+		String definition = req.getDefinition();
 		
-		//handle read
-		if (requestType.equals("query"));
+		String response = ""; 
+		switch (requestType) {
+			case "add":
+				response = dict.add(word, definition);
+			case "remove":
+				response = dict.remove(word);
+			case "query":
+				response = dict.query(word);
+		}
 		
+		//write the requestType, word, definition (if any) / body to the client
 		
-		
-		
+				
+
 	}
 
 }
