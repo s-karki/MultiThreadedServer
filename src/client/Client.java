@@ -4,6 +4,7 @@ import java.net.*;
 import java.util.Scanner;
 
 import data.*;
+import exception.ExceptionHandler;
 
 import java.io.*;
 import mjson.Json; 
@@ -20,9 +21,9 @@ public class Client {
 		try {
 			 conn = new Socket(host, port);
 		} catch (UnknownHostException e) {
-			ClientException.printMessageAndExit("Error: We could not find the host", e);
+			ExceptionHandler.printMessageAndExit("Error: We could not find the host", e);
 		} catch (IOException e) {
-			ClientException.printMessageAndExit("Error: An IO Error occured when initialising "
+			ExceptionHandler.printMessageAndExit("Error: An IO Error occured when initialising "
 					+ "socket", e); 
 		}
 		
