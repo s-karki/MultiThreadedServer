@@ -31,9 +31,11 @@ public class Dictionary {
 		while((record = reader.readLine()) != null) {
 			// parse JSON
 			Json j = Json.read(record);
-			String word = j.at("word").toString();
-			String definition = j.at("definition").toString();
+			String word = j.at("word").asString();
+			String definition = j.at("definition").asString();
 			readIn.put(word, definition);
+			System.out.println("hmap: " + "word: " + word + " definition: " + definition);
+			
 		}
 		dict = readIn; 
 		reader.close();
@@ -47,6 +49,7 @@ public class Dictionary {
 		} finally {
 			lock.readLock().unlock();
 		}
+		//System.out.println("res: " + res);
 		String ret = (res == null) ? "" : res; 
 		return ret; 
 	}
@@ -62,20 +65,13 @@ public class Dictionary {
 		
 		boolean success = false; 
 		String append = "";
+		
+		System.out.println("Attempting add: " + word + " "  + definition);
+
 		lock.writeLock().lock();
 		try {
-			if(dict.get(word) != null){ 
-				dict.remove(word);
-				removeFileRecord(word);
-			}		
-			dict.put(word, definition);
-			BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
-			String jsonString = Json.object().set("word", word).set("definition", definition)
-					.toString();
-			writer.write(jsonString + System.getProperty("line.separator"));
-			writer.close();
-			size++;
-			success = true;
+			writeToFile(word, definition);
+			success = true; 
 		}
 		catch (IOException e) {
 			success = false;
@@ -116,6 +112,30 @@ public class Dictionary {
 	}
 	
 	
+	
+	
+	private void writeToFile(String word, String definition) throws IOException {
+		if(dict.get(word) != null){ 
+			removeFileRecord(word);
+		}
+		
+		dict.put(word, definition);
+		String jsonString = Json.object()
+				.set("word", word)
+				.set("definition", definition)
+				.toString();
+		
+		FileWriter fw = new FileWriter(filename, true);
+		
+		fw.write(jsonString + System.getProperty("line.separator"));
+		fw.close();
+		
+		System.out.println("Wrote to file " + "jsonstr: " + jsonString);
+		size++;
+		
+	}
+	
+	
 	private void removeFileRecord(String word) throws FileNotFoundException, IOException {
 		File tempFile = new File("temp.txt");
 		
@@ -126,7 +146,7 @@ public class Dictionary {
 		
 		while ((line = reader.readLine()) != null) {
 			String trimmed = line.trim();
-			String recordWord = Json.read(trimmed).at("word").toString();
+			String recordWord = Json.read(trimmed).at("word").asString();
 			if (recordWord.equals(word)) {
 				continue;
 			}

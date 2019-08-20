@@ -36,27 +36,45 @@ public class ConnectionRunnable implements Runnable {
 				in = din.readUTF();
 			} catch (IOException e) {
 				System.out.println("Client has disconnected");
+				try {
+				din.close(); //attempt to gracefully disconnect. 
+				dout.close();
+				conn.close();
+				} catch(IOException e1) {
+					return; //kill the thread
+				}
 				return; 
 			}
+			
 			Request req = new Request(Json.read(in));
+			
+			
 			String requestType = req.getRequestType();
 			String word = req.getWord();
 			String definition = req.getDefinition();
 			
 			String response = ""; 
 			
-			System.out.println(req);
-			System.out.println("requestType:" + requestType);
+			//System.out.println("requestType:" + requestType);
+			//System.out.println(Json.read(in));
+			//System.out.println(req);
+			
+			
 			
 			switch (requestType) {
-				case "\"add\"":
+				case "add":
+					System.out.println("Adding");
 					response = dict.add(word, definition);
-				case "\"remove\"":
+					break;
+				case "remove":
+					System.out.println("Removing");
 					response = dict.remove(word);
-				case "\"query\"":
+					break;
+				case "query":
+					System.out.println("Querying");
 					response = dict.query(word);
+					break;
 			}
-			System.out.println(response);
 	
 			
 			//write the requestType, word, definition (if any) / body to the client

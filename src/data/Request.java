@@ -23,15 +23,13 @@ public class Request {
 	
 	// translate from Json to request
 	public Request(Json j) {
-		String r = j.at("requestType").toString();
-		String w = j.at("word").toString();
+		String r = j.at("requestType").asString();
+		String w = j.at("word").asString();
 		
-		System.out.println("r: " + r);
 
 		String d = null;
-		if (r.equals("\"add\"")) {
-			d = j.at("definition").toString();
-			System.out.println("d: " + d);
+		if (r.equals("add")) {
+			d = j.at("definition").asString();
 		}
 		
 		/*System.out.println(r);

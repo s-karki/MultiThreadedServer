@@ -71,6 +71,10 @@ public class Client {
 				}
 				String definition = sb.toString();
 				out = new Request(requestType, word, definition).getJsonString();
+				
+				System.out.println(definition);
+				System.out.println(out);
+				
 							
 				
 			} else {
@@ -82,10 +86,10 @@ public class Client {
 			String in = din.readUTF();
 			Response res = new Response(Json.read(in)); // need error handling (illegal argument/server dies)??
 			
-			System.out.println("\n");
+			/*System.out.println("\n");
 			System.out.println(res.getRequestType());
 			System.out.println(res.getWord());
-			System.out.println(res.getBody());
+			System.out.println(res.getBody());*/
 			
 			
 		

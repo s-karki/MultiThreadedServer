@@ -16,9 +16,9 @@ public class Response {
 	}
 	
 	public Response(Json j) {
-		String requestType = j.at("requestType").toString();
-		String word = j.at("word").toString();
-		String body = j.at("body").toString();
+		String requestType = j.at("requestType").asString();
+		String word = j.at("word").asString();
+		String body = j.at("body").asString();
 		
 		if (requestType == null || word == null) {
 			throw new IllegalArgumentException();
