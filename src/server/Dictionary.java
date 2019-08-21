@@ -1,57 +1,58 @@
 package server;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.locks.*;
 
+import exception.ExceptionHandler;
 import mjson.Json;
-
 import java.io.*;
 
 public class Dictionary {
 	File filename;
-	int size; 
 	private final ReadWriteLock lock; 
-	HashMap<String, String> dict;
+	HashMap<String, ArrayList<String>> dict;
 	
 	
-	/* results are written to a textfile, and loaded into memory 
+	/* results are written to a text file, and loaded into memory 
 	 * on startup
 	 */
 	public Dictionary(File filename) {
 		this.filename = filename;
 		this.lock = new ReentrantReadWriteLock();
-		size = 0; 
 		
 	}
 	
+	// load all current records into memory for faster lookups 
 	public void loadIntoMemory() throws FileNotFoundException, IOException {
-		HashMap<String, String> readIn = new HashMap<>();
+		HashMap<String, ArrayList<String>> readIn = new HashMap<>();
+		
 		BufferedReader reader = new BufferedReader(new FileReader(filename));
 		String record;
 		while((record = reader.readLine()) != null) {
 			// parse JSON
 			Json j = Json.read(record);
 			String word = j.at("word").asString();
-			String definition = j.at("definition").asString();
-			readIn.put(word, definition);
-			System.out.println("hmap: " + "word: " + word + " definition: " + definition);
-			
+			List<Object> ol = j.at("definition").asList();
+			ArrayList<String> defs = new ArrayList<>();
+			for (Object o : ol) {
+				defs.add(o.toString());
+			}
+			readIn.put(word, defs);		
 		}
 		dict = readIn; 
 		reader.close();
 	}
-	
-	public String query(String word) {
-		String res;
+	public ArrayList<String> query(String word) {
+		ArrayList<String> res;
 		lock.readLock().lock();
 		try {
 			res = dict.get(word);
 		} finally {
 			lock.readLock().unlock();
 		}
-		//System.out.println("res: " + res);
-		String ret = (res == null) ? "" : res; 
-		return ret; 
+		return res; 
 	}
 	
 	/* query the word – if we find match, we overwrite it
@@ -59,87 +60,105 @@ public class Dictionary {
 	 */ 
 	public String add(String word, String definition) {		
 		if (word == null || word.equals("") || definition == null || definition.equals("")) {
-			return "Error: the word or definition you supplied was empty. The dictionary will"
+			return "Error: The word or definition you supplied was empty. The dictionary will"
 					+ " not be updated"; 
 		}
 		
-		boolean success = false; 
-		String append = "";
-		
-		System.out.println("Attempting add: " + word + " "  + definition);
-
+		String msg = "";
 		lock.writeLock().lock();
 		try {
 			writeToFile(word, definition);
-			success = true; 
+			msg = "The word " + "\"" + word + "\"" + " and the definition " + "\""
+			+ definition + " were successfully added to the dictionary";
 		}
 		catch (IOException e) {
-			success = false;
-			append = ": There was an IO Error writing to the dictionary file";
+			ExceptionHandler.printMessage("Error: There was an IO Error "
+					+ "writing to the dictionary file during the addition", e);
 		} finally {
 			lock.writeLock().unlock();
 		}
-		
-		System.out.println("res: " + Boolean.toString(success) + append);
-		return Boolean.toString(success) + append; 
-		
+		return msg; 
 	}
 	
 	public String remove(String word) {
 		if (word == null || word.equals("")) {
-			return "Error: the word you supplied was empty. "
+			return "Error: the word you entered was empty. "
 					+ "The dictionary will not be updated";
 		}
-		boolean success = false; 
-		String append = ""; 
-		
+		if(dict.get(word) == null) {
+			return "The word you entered was not in the dictionary, and could "
+					+ "not be removed.";
+		}	
+		String msg = "";
 		lock.writeLock().lock();
 		try {
 			dict.remove(word);
 			removeFileRecord(word);
-			size--; 
-			success = true;
-			append = ""; 
+			msg = "The word and its definition were successfully removed"; 
 		} 
 		catch (IOException e) {
-			success = false; 
-			append = ": There was an IO Error writing to the dictionary file";
+			ExceptionHandler.printMessage("Error: There was an IO Error "
+					+ "writing to the dictionary file during the deletion", e);
 		}
 		finally {
 			lock.writeLock().unlock();
 		}
-		return Boolean.toString(success) + append; 
+		return msg; 
 	}
+		
+	/*	Helper methods to support add and remove */
 	
-	
-	
-	
+	/* Write to the dictionary file 
+	 * There are two types of write: When we encounter a new word, and append to the file, and when 
+	 * we update an existing record, and rewrite a line
+	 */
 	private void writeToFile(String word, String definition) throws IOException {
-		if(dict.get(word) != null){ 
-			removeFileRecord(word);
+		if(dict.containsKey(word)){ 
+			ArrayList<String> currentDef = dict.get(word);
+			currentDef.add(definition);
+			dict.put(word, currentDef);
+			
+			String jsonString = generateWordJson(word, currentDef); // JSON with new K-V mapping
+
+			File tempFile = new File("temp.txt");
+			BufferedReader reader = new BufferedReader(new FileReader(filename));
+			BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+			
+			String line; 
+			while((line = reader.readLine()) != null) {
+				String trimmed = line.trim();
+				String recordWord = Json.read(trimmed).at("word").asString();
+				if (recordWord.equals(word)) {
+					writer.write(jsonString + System.getProperty("line.separator"));
+				} else {
+					writer.write(line + System.getProperty("line.separator"));
+				}
+			
+			}
+			writer.close();
+			reader.close();
+			filename.delete();
+			tempFile.renameTo(filename);
+		}
+		else {
+			ArrayList<String> newDef = new ArrayList<>();
+			newDef.add(definition);
+			dict.put(word, newDef);
+			
+			// append to the file with a new record
+			String jsonString = generateWordJson(word, newDef);
+			FileWriter fw = new FileWriter(filename, true);
+			fw.write(jsonString + System.getProperty("line.separator"));
+			fw.close();
 		}
 		
-		dict.put(word, definition);
-		String jsonString = Json.object()
-				.set("word", word)
-				.set("definition", definition)
-				.toString();
-		
-		FileWriter fw = new FileWriter(filename, true);
-		
-		fw.write(jsonString + System.getProperty("line.separator"));
-		fw.close();
-		
-		System.out.println("Wrote to file " + "jsonstr: " + jsonString);
-		size++;
-		
 	}
 	
-	
+	/* Remove a record by copying all records (except the one matching the word) to a new file,
+	 * deleting the original file, and renaming the new file.
+	 */
 	private void removeFileRecord(String word) throws FileNotFoundException, IOException {
 		File tempFile = new File("temp.txt");
-		
-		
 		BufferedReader reader = new BufferedReader(new FileReader(filename));
 		BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
 		String line; 
@@ -159,6 +178,11 @@ public class Dictionary {
 	
 	}
 	
-
+	private String generateWordJson(String word, ArrayList<String> definition) {
+		String jsonString = Json.object()
+				.set("word", word)
+				.set("definition", definition).toString();
+		return jsonString; 
+	}
 	
 }

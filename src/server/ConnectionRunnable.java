@@ -1,6 +1,7 @@
 package server;
 
 import java.net.*;
+import java.util.ArrayList;
 import java.io.*;
 import mjson.Json; 
 import data.*;
@@ -29,9 +30,7 @@ public class ConnectionRunnable implements Runnable {
 		}
 		
 		String in; 
-		
 		while(true) {
-
 			try {
 				in = din.readUTF();
 			} catch (IOException e) {
@@ -41,43 +40,29 @@ public class ConnectionRunnable implements Runnable {
 				dout.close();
 				conn.close();
 				} catch(IOException e1) {
-					return; //kill the thread
+					break; //kill the thread
 				}
-				return; 
+				break; 
 			}
 			
-			Request req = new Request(Json.read(in));
-			
-			
+			Request req = new Request(Json.read(in));	
 			String requestType = req.getRequestType();
 			String word = req.getWord();
 			String definition = req.getDefinition();
 			
-			String response = ""; 
-			
-			//System.out.println("requestType:" + requestType);
-			//System.out.println(Json.read(in));
-			//System.out.println(req);
-			
-			
-			
+			ArrayList<String> response = new ArrayList<>(); 	
+					
 			switch (requestType) {
 				case "add":
-					System.out.println("Adding");
-					response = dict.add(word, definition);
+					response.add(dict.add(word, definition));
 					break;
 				case "remove":
-					System.out.println("Removing");
-					response = dict.remove(word);
+					response.add(dict.remove(word));
 					break;
 				case "query":
-					System.out.println("Querying");
-					response = dict.query(word);
+					response.addAll(dict.query(word));
 					break;
 			}
-	
-			
-			//write the requestType, word, definition (if any) / body to the client
 			String msg = new Response(requestType, word, response).getJsonString();
 			try {
 				dout.writeUTF(msg);
@@ -86,6 +71,8 @@ public class ConnectionRunnable implements Runnable {
 				return; 
 			}
 		}
+		System.out.println("thread complete, waiting for a new one");
+
 	}
 
 }

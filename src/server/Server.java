@@ -17,7 +17,7 @@ class Server {
 		//create a dictionary file if it does not exist, and load records into memory
 		f.createNewFile(); 
 		Dictionary dict = new Dictionary(f);
-		dict.loadIntoMemory();
+		dict.loadIntoMemory(); // error handle here 
 		
 		int port = Integer.parseInt(args[0]);
 		ServerSocket server = new ServerSocket(port);		
@@ -27,7 +27,7 @@ class Server {
 			System.out.println("New Socket opened to " + conn.getInetAddress() + " on port "
 			+ port);
 			new Thread(new ConnectionRunnable(conn, dict)).start();
-
+			
 		}
 		
 	}

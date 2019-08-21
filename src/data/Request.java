@@ -25,17 +25,10 @@ public class Request {
 	public Request(Json j) {
 		String r = j.at("requestType").asString();
 		String w = j.at("word").asString();
-		
-
 		String d = null;
 		if (r.equals("add")) {
 			d = j.at("definition").asString();
 		}
-		
-		/*System.out.println(r);
-		System.out.println(w);
-		System.out.println(d);
-		System.out.println(j);*/
 		
 		if (r == null || w == null) {
 			throw new IllegalArgumentException();

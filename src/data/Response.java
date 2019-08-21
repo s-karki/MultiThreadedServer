@@ -1,5 +1,8 @@
 package data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import mjson.Json;
 
 public class Response {
@@ -7,9 +10,9 @@ public class Response {
 	static String[] requestTypes = {"query", "add", "remove"}; 
 	String requestType;
 	String word;
-	String body;
+	ArrayList<String> body;
 	
-	public Response(String requestType, String word, String body) {
+	public Response(String requestType, String word, ArrayList<String> body) {
 		this.requestType = requestType;
 		this.word = word;
 		this.body = body;
@@ -18,14 +21,19 @@ public class Response {
 	public Response(Json j) {
 		String requestType = j.at("requestType").asString();
 		String word = j.at("word").asString();
-		String body = j.at("body").asString();
+		List<Object> body = j.at("body").asList();
+		ArrayList<String> responseList = new ArrayList<>();
 		
 		if (requestType == null || word == null) {
 			throw new IllegalArgumentException();
 		} else {
 			this.requestType = requestType;
 			this.word = word;
-			this.body = body;
+			for (Object o : body) {
+				responseList.add(o.toString());
+			}
+			this.body = responseList; 
+			
 		}
 	}
 	
@@ -46,7 +54,7 @@ public class Response {
 		return this.word;
 	}
 
-	public String getBody() {
+	public ArrayList<String> getBody() {
 		return this.body;
 	}
 
